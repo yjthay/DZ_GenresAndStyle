@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pickle
 import itertools
+import re
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from datasets import load_dataset, list_datasets
@@ -78,9 +79,7 @@ class Layers(torch.nn.Module):
 
 def best_model_filename(folder_path):
     regex_condition = re.compile('^.+_(.+\..+)\.pt')
-    # regex_condition = re.compile('^.+_(.+)_.+.pt')
     min_val_loss = np.inf
-    # min_val_loss = 0
     model_name = ''
     for filename in os.listdir(folder_path):
         if filename.endswith('.pt'):
@@ -92,7 +91,7 @@ def best_model_filename(folder_path):
                 # if val_loss>min_val_loss:
                 min_val_loss = val_loss
                 model_name = filename
-    return model_save_path + model_name
+    return folder_path + model_name
 
 
 def pickle_dump(data, fname):
