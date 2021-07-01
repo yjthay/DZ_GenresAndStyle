@@ -18,7 +18,7 @@ from datasets import load_dataset, list_datasets
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import BertModel, BertTokenizer
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix
 
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
@@ -122,20 +122,31 @@ def mapping(data=load_dataset('go_emotions')):
     return label_mapping
 
 
-def predict(model, text, batch_size=32, threshold=0.5):
+def predict(model, data, batch_size=32, threshold=0.5):
     '''
     outputs = torch.rand((3,3))
     threshold = 0.5
     y_pred = (outputs >= threshold)*torch.ones(outputs.shape)
     '''
-    n = len(text)
-    loader = DataLoader(text, batch_size=batch_size)
+    n = len(data)
+    loader = DataLoader(data, batch_size=batch_size)
     pred = []
     for x, y in loader:
         outputs = model(x)
-        y_pred = (outputs >= threshold) * torch.ones(outputs.shape)
+        if outputs.is_cuda:
+            y_pred = (outputs >= threshold) * torch.ones(outputs.shape).to('cuda')
+        else:
+            y_pred = (outputs >= threshold) * torch.ones(outputs.shape)
         pred += y_pred.tolist()
     return np.array(pred)
+
+
+#
+# def f1_score(model, data, batch_size=32, threshold=0.5):
+#     text, labels = data['text'], data['labels']
+#     y_pred = predict(model, text, batch_size=batch_size)
+#     y_true = label_multi_one_hot(labels).numpy()
+#     y_true-y_pred
 
 
 def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
@@ -147,18 +158,22 @@ def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
     :return:
     dictionary of emotions and confusion matrix associated with it
     '''
-    text, labels = data['text'], data['labels']
-    y_pred = predict(model, text, batch_size=batch_size)
-    y_true = label_multi_one_hot(labels).numpy()
+    y_pred = predict(model, data, batch_size=batch_size)
+    y_true = data.labels.cpu().numpy()
     label_names = list(label_mapping.values())
     m_classes = len(label_names)
-    confusion_matrix_dict = {}
+    output = multilabel_confusion_matrix(y_true=y_true, y_pred=y_pred)
+    output = output / np.sum(output, axis=(1, 2))[:, None, None]
+    return output
 
-    for label_num in label_mapping.keys():
-        y_true_label = y_true[:, label_num]
-        y_pred_label = y_pred[:, label_num]
-        temp_cm = confusion_matrix(y_pred=y_pred_label, y_true=y_true_label, labels=label_names, normalize='true')
-        assert temp_cm.shape == (m_classes, m_classes)
-        confusion_matrix_dict[label_mapping[label_num]] = temp_cm
 
-    return confusion_matrix_dict
+from utils import *
+
+data = load_dataset('go_emotions')
+model_file_path = best_model_filename('model/epochs/')
+model = torch.load(model_file_path)
+
+test_data = EmotionsDataset(data['test'])
+train_data = EmotionsDataset(data['train'])
+label_mapping = mapping()
+test_confusion_matrix = mlb_confusion_matrix(label_mapping, model, test_data, batch_size=32)
