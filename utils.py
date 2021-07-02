@@ -162,8 +162,6 @@ def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
 def mlb_f1_score(model, data, batch_size=32, threshold=0.5):
     y_pred = predict(model, data, batch_size=batch_size)
     y_true = data.labels.cpu().numpy()
-    label_names = list(label_mapping.values())
-    m_classes = len(label_names)
     return f1_score(y_true, y_pred, average='samples')
 
 
