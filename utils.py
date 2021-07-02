@@ -18,7 +18,7 @@ from datasets import load_dataset, list_datasets
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import BertModel, BertTokenizer
-from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix, f1_score
 
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
@@ -141,14 +141,6 @@ def predict(model, data, batch_size=32, threshold=0.5):
     return np.array(pred)
 
 
-#
-# def f1_score(model, data, batch_size=32, threshold=0.5):
-#     text, labels = data['text'], data['labels']
-#     y_pred = predict(model, text, batch_size=batch_size)
-#     y_true = label_multi_one_hot(labels).numpy()
-#     y_true-y_pred
-
-
 def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
     '''
     :param label_mapping: dictionary of label_num to emotions mapping
@@ -167,13 +159,25 @@ def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
     return output
 
 
-from utils import *
+def mlb_f1_score(model, data, batch_size=32, threshold=0.5):
+    y_pred = predict(model, data, batch_size=batch_size)
+    y_true = data.labels.cpu().numpy()
+    label_names = list(label_mapping.values())
+    m_classes = len(label_names)
+    return f1_score(y_true, y_pred, average='samples')
 
-data = load_dataset('go_emotions')
-model_file_path = best_model_filename('model/epochs/')
-model = torch.load(model_file_path)
 
-test_data = EmotionsDataset(data['test'])
-train_data = EmotionsDataset(data['train'])
-label_mapping = mapping()
-test_confusion_matrix = mlb_confusion_matrix(label_mapping, model, test_data, batch_size=32)
+# from utils import *
+#
+# data = load_dataset('go_emotions')
+# model_file_path = best_model_filename('model/epochs/')
+# model = torch.load(model_file_path)
+# label_mapping = mapping()
+#
+# test_data = EmotionsDataset(data['test'])
+# test_confusion_matrix = mlb_confusion_matrix(label_mapping, model, test_data, batch_size=32)
+# test_score = mlb_f1_score(model, test_data)
+#
+# train_data = EmotionsDataset(data['train'])
+# train_confusion_matrix = mlb_confusion_matrix(label_mapping, model, train_data, batch_size=32)
+# train_score = mlb_f1_score(model, train_data)
