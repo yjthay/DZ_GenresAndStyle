@@ -137,28 +137,19 @@ def predict(model, data, batch_size=32):
     return np.array(pred)
 
 
-def mlb_confusion_matrix(label_mapping, model, data, batch_size=32):
+def mlb_confusion_matrix(label_mapping, y_pred, y_true):
     '''
     :param label_mapping: dictionary of label_num to emotions mapping
-    :param model: Pytorch Model for prediction
-    :param data: Loaded data from Hugging Face GoEmotions
-    :param batch_size: int default=32
+    :param y_pred: numpy array of predict labels
+    :param y_true: numpy array of true labels
     :return:
     dictionary of emotions and confusion matrix associated with it
     '''
-    y_pred = predict(model, data, batch_size=batch_size)
-    y_true = data.labels.cpu().numpy()
     label_names = list(label_mapping.values())
     m_classes = len(label_names)
     output = multilabel_confusion_matrix(y_true=y_true, y_pred=y_pred)
     output = output / np.sum(output, axis=(1, 2))[:, None, None]
     return output
-
-
-def mlb_f1_score(model, data, batch_size=32, threshold=0.5):
-    y_pred = predict(model, data, batch_size=batch_size)
-    y_true = data.labels.cpu().numpy()
-    return f1_score(y_true, y_pred, average='samples')
 
 
 # from utils import *
