@@ -122,7 +122,7 @@ def mapping(data=load_dataset('go_emotions')):
     return label_mapping
 
 
-def predict(model, data, batch_size=32, threshold=0.5):
+def predict(model, data, batch_size=32):
     '''
     outputs = torch.rand((3,3))
     threshold = 0.5
@@ -132,11 +132,7 @@ def predict(model, data, batch_size=32, threshold=0.5):
     loader = DataLoader(data, batch_size=batch_size)
     pred = []
     for x, y in loader:
-        outputs = model(x)
-        if outputs.is_cuda:
-            y_pred = (outputs >= threshold) * torch.ones(outputs.shape).to('cuda')
-        else:
-            y_pred = (outputs >= threshold) * torch.ones(outputs.shape)
+        y_pred = model(x)
         pred += y_pred.tolist()
     return np.array(pred)
 
