@@ -158,11 +158,5 @@ def mlb_confusion_matrix(label_mapping, y_pred, y_true):
 # model_file_path = best_model_filename('model/epochs/64/')
 # model = torch.load(model_file_path)
 # label_mapping = mapping()
-#
 # test_data = EmotionsDataset(data['test'], max_length=64)
-# test_confusion_matrix = mlb_confusion_matrix(label_mapping, model, test_data, batch_size=32)
-# test_score = mlb_f1_score(model, test_data)
-#
 # train_data = EmotionsDataset(data['train'], max_length=64)
-# train_confusion_matrix = mlb_confusion_matrix(label_mapping, model, train_data, batch_size=32)
-# train_score = mlb_f1_score(model, train_data)
