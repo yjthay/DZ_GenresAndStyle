@@ -19,6 +19,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import BertModel, BertTokenizer
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
+import matplotlib as mpl
+
+norm = mpl.colors.Normalize(vmin=0, vmax=28)
+cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
 
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
@@ -152,11 +156,27 @@ def mlb_confusion_matrix(label_mapping, y_pred, y_true):
     return output
 
 
-# from utils import *
-#
-# data = load_dataset('go_emotions')
-# model_file_path = best_model_filename('model/epochs/64/')
-# model = torch.load(model_file_path)
-# label_mapping = mapping()
-# test_data = EmotionsDataset(data['test'], max_length=64)
-# train_data = EmotionsDataset(data['train'], max_length=64)
+def visualize_scatter(data_2d, label_ids, figsize=(10, 10)):
+    plt.figure(figsize=figsize)
+    plt.grid()
+    label_mapping = mapping()
+    nb_classes = len(np.unique(label_ids))
+
+    # Data Cleaning
+    x, y = [], []
+    for coordinates, ls in zip(data_2d, label_ids):
+        for label in ls:
+            x.append(coordinates + np.random.rand())
+            y.append(label)
+    data_2d, label_ids = np.array(x), np.array(y)
+
+    for label_id in np.unique(label_ids):
+        plt.scatter(data_2d[np.where(label_ids == label_id), 0],
+                    data_2d[np.where(label_ids == label_id), 1],
+                    marker='o',
+                    color=cmap.to_rgba(label_id + 1),
+                    linewidth='1',
+                    alpha=0.8,
+                    label=label_mapping[label_id])
+    plt.legend(loc='best')
+    return plt
