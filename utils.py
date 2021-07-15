@@ -215,3 +215,16 @@ def convert_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_datas
         # Append unique ekman index
         output.append(list(set(temp)))
     return output
+
+
+def reverse_one_hot(labels):
+    idx, labels = np.nonzero(labels)
+    output = [[]]
+    prev_i = 0
+    for i,j in zip(idx,labels):
+        if prev_i == i:
+            output[-1].append(j)
+        else:
+            output.append([j])
+        prev_i=i
+    return output
