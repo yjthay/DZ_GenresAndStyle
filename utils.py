@@ -157,6 +157,12 @@ def mlb_confusion_matrix(label_mapping, y_pred, y_true):
 
 
 def visualize_scatter(data_2d, label_ids, figsize=(10, 10)):
+    '''
+    :param data_2d: tSNE Reduced Data np.array(n samples by 2)
+    :param label_ids: multilabelled data list (n samples by labels)
+    :param figsize: tuple size of output graph
+    :return: plt
+    '''
     plt.figure(figsize=figsize)
     plt.grid()
     label_mapping = mapping()
@@ -164,10 +170,10 @@ def visualize_scatter(data_2d, label_ids, figsize=(10, 10)):
 
     # Data Cleaning
     x, y = [], []
-    for coordinates, ls in zip(data_2d, label_ids):
-        for label in ls:
-            x.append(coordinates + np.random.rand())
-            y.append(label)
+    idx, labels = np.nonzero(label_ids)
+    for i, j in zip(idx, labels):
+        x.append(data_2d[i] + np.random.rand())
+        y.append(j)
     data_2d, label_ids = np.array(x), np.array(y)
 
     for label_id in np.unique(label_ids):
