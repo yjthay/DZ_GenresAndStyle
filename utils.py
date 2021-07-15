@@ -160,9 +160,9 @@ def visualize_scatter(data_2d, label_ids, label_mapping, figsize=(10, 10)):
     :param figsize: tuple size of output graph
     :return: plt
     '''
-
+    cm = plt.get_cmap('gist_rainbow')
     norm = mpl.colors.Normalize(vmin=0, vmax=max(label_mapping.keys()))
-    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cm)
 
     plt.figure(figsize=figsize)
     plt.grid()
