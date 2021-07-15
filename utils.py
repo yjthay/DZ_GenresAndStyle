@@ -187,7 +187,7 @@ def visualize_scatter(data_2d, label_ids, label_mapping, figsize=(10, 10)):
     return plt
 
 
-def convert_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_dataset('go_emotions')):
+def convert_to_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_dataset('go_emotions')):
     # Retrieve the json of ekman emotion name to goemotions name mapping
     # Name to Name mapping
     with open(ekman_fname) as f:
@@ -195,7 +195,7 @@ def convert_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_datas
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_ekman, idx = {}, 0
+    goemotions_to_ekman, idx = {obj.num_classes:len(ekman_mapping)}, 0
 
     # Create mapping of goemotions key to ekman key i.e. dictionary of 28 keys mapped down to 6 ekman emotions
     for idx in range(obj.num_classes):
@@ -214,6 +214,32 @@ def convert_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_datas
         output.append(list(set(temp)))
     return output
 
+def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', data=load_dataset('go_emotions')):
+    # Retrieve the json of sentiment emotion name to goemotions name mapping
+    # Name to Name mapping
+    with open(sentiment_fname) as f:
+        sentiment_mapping = json.load(f)
+
+    # Create data obj
+    obj = data['train'].features['labels'].feature
+    goemotions_to_sentiment, idx = {obj.num_classes:len(ekman_mapping)}, 0
+
+    # Create mapping of goemotions key to sentiment key i.e. dictionary of 28 keys mapped down to 3+1 sentiments
+    for idx in range(obj.num_classes):
+        emotion = obj.int2str(idx)
+        for id, emotions in enumerate(list(sentiment_mapping.values())):
+            if emotion in emotions:
+                goemotions_to_sentiment[idx] = id
+
+    # Get list of lists from multi label data and map them down into list of lists for ekman
+    output = []
+    for multilabel in labels:
+        temp = []
+        for label in multilabel:
+            temp.append(goemotions_to_sentiment[label])
+        # Append unique ekman index
+        output.append(list(set(temp)))
+    return output
 
 def reverse_one_hot(labels):
     idx, labels = np.nonzero(labels)
