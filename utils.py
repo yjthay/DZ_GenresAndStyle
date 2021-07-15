@@ -157,6 +157,7 @@ def visualize_scatter(data_2d, label_ids, label_mapping, figsize=(10, 10)):
     '''
     :param data_2d: tSNE Reduced Data np.array(n samples by 2)
     :param label_ids: multilabelled data list of one-hot encodings (n samples by labels)
+    :param label_mapping: dictionary of id to emotions string
     :param figsize: tuple size of output graph
     :return: plt
     '''
