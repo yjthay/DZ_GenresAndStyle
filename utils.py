@@ -22,10 +22,6 @@ from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
 import json
 
-norm = mpl.colors.Normalize(vmin=0, vmax=28)
-cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
-
-
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
     def __init__(self, data, Model=BertModel, Tokenizer=BertTokenizer, max_length=12, bert_type='bert-base-cased',
@@ -157,17 +153,19 @@ def mlb_confusion_matrix(label_mapping, y_pred, y_true):
     return output
 
 
-def visualize_scatter(data_2d, label_ids, figsize=(10, 10)):
+def visualize_scatter(data_2d, label_ids, label_mapping, figsize=(10, 10)):
     '''
     :param data_2d: tSNE Reduced Data np.array(n samples by 2)
-    :param label_ids: multilabelled data list (n samples by labels)
+    :param label_ids: multilabelled data list of one-hot encodings (n samples by labels)
     :param figsize: tuple size of output graph
     :return: plt
     '''
+
+    norm = mpl.colors.Normalize(vmin=0, vmax=max(label_mapping.keys()))
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+
     plt.figure(figsize=figsize)
     plt.grid()
-    label_mapping = mapping()
-    nb_classes = len(np.unique(label_ids))
 
     # Data Cleaning
     x, y = [], []
@@ -221,10 +219,10 @@ def reverse_one_hot(labels):
     idx, labels = np.nonzero(labels)
     output = [[]]
     prev_i = 0
-    for i,j in zip(idx,labels):
+    for i, j in zip(idx, labels):
         if prev_i == i:
             output[-1].append(j)
         else:
             output.append([j])
-        prev_i=i
+        prev_i = i
     return output
