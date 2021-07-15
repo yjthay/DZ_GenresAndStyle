@@ -22,6 +22,7 @@ from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
 import json
 
+
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
     def __init__(self, data, Model=BertModel, Tokenizer=BertTokenizer, max_length=12, bert_type='bert-base-cased',
@@ -196,7 +197,7 @@ def convert_to_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_da
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_ekman, idx = {obj.num_classes:len(ekman_mapping)}, 0
+    goemotions_to_ekman, idx = {obj.num_classes: len(ekman_mapping)}, 0
 
     # Create mapping of goemotions key to ekman key i.e. dictionary of 28 keys mapped down to 6 ekman emotions
     for idx in range(obj.num_classes):
@@ -215,6 +216,7 @@ def convert_to_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_da
         output.append(list(set(temp)))
     return output
 
+
 def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', data=load_dataset('go_emotions')):
     # Retrieve the json of sentiment emotion name to goemotions name mapping
     # Name to Name mapping
@@ -223,7 +225,7 @@ def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', 
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_sentiment, idx = {obj.num_classes:len(ekman_mapping)}, 0
+    goemotions_to_sentiment, idx = {obj.num_classes: len(ekman_mapping)}, 0
 
     # Create mapping of goemotions key to sentiment key i.e. dictionary of 28 keys mapped down to 3+1 sentiments
     for idx in range(obj.num_classes):
@@ -242,6 +244,7 @@ def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', 
         output.append(list(set(temp)))
     return output
 
+
 def reverse_one_hot(labels):
     idx, labels = np.nonzero(labels)
     output = [[]]
@@ -253,3 +256,14 @@ def reverse_one_hot(labels):
             output.append([j])
         prev_i = i
     return output
+
+
+def gen_tsne_values(high_dim_data):
+    tsne_model = TSNE(perplexity=30,
+                      n_components=2,
+                      n_iter=1000,
+                      random_state=23,
+                      learning_rate=500,
+                      init="pca")
+    new_values = tsne_model.fit_transform(high_dim_data)
+    return new_values
