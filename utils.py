@@ -20,6 +20,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import BertModel, BertTokenizer
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
+import json
 
 norm = mpl.colors.Normalize(vmin=0, vmax=28)
 cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
@@ -186,3 +187,31 @@ def visualize_scatter(data_2d, label_ids, figsize=(10, 10)):
                     label=label_mapping[label_id])
     plt.legend(loc='best')
     return plt
+
+
+def convert_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_dataset('go_emotions')):
+    # Retrieve the json of ekman emotion name to goemotions name mapping
+    # Name to Name mapping
+    with open(ekman_fname) as f:
+        ekman_mapping = json.load(f)
+
+    # Create data obj
+    obj = data['train'].features['labels'].feature
+    goemotions_to_ekman, idx = {}, 0
+
+    # Create mapping of goemotions key to ekman key i.e. dictionary of 28 keys mapped down to 6 ekman emotions
+    for idx in range(obj.num_classes):
+        emotion = obj.int2str(idx)
+        for id, emotions in enumerate(list(ekman_mapping.values())):
+            if emotion in emotions:
+                goemotions_to_ekman[idx] = id
+
+    # Get list of lists from multi label data and map them down into list of lists for ekman
+    output = []
+    for multilabel in labels:
+        temp = []
+        for label in multilabel:
+            temp.append(goemotions_to_ekman[label])
+        # Append unique ekman index
+        output.append(list(set(temp)))
+    return output
