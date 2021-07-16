@@ -198,7 +198,7 @@ def convert_to_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_da
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_ekman, idx = {obj.num_classes: len(ekman_mapping)}, 0
+    goemotions_to_ekman, idx = {obj.num_classes-1: len(ekman_mapping)}, 0
 
     # Create mapping of goemotions key to ekman key i.e. dictionary of 28 keys mapped down to 6 ekman emotions
     for idx in range(obj.num_classes):
@@ -226,7 +226,7 @@ def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', 
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_sentiment, idx = {obj.num_classes: len(ekman_mapping)}, 0
+    goemotions_to_sentiment, idx = {obj.num_classes-1: len(sentiment_mapping)}, 0
 
     # Create mapping of goemotions key to sentiment key i.e. dictionary of 28 keys mapped down to 3+1 sentiments
     for idx in range(obj.num_classes):
@@ -235,13 +235,13 @@ def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', 
             if emotion in emotions:
                 goemotions_to_sentiment[idx] = id
 
-    # Get list of lists from multi label data and map them down into list of lists for ekman
+    # Get list of lists from multi label data and map them down into list of lists for sentiment
     output = []
     for multilabel in labels:
         temp = []
         for label in multilabel:
             temp.append(goemotions_to_sentiment[label])
-        # Append unique ekman index
+        # Append unique sentiment index
         output.append(list(set(temp)))
     return output
 
