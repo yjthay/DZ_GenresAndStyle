@@ -21,6 +21,7 @@ from transformers import BertModel, BertTokenizer
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
 import json
+from sklearn.manifold import TSNE
 
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
