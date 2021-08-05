@@ -116,13 +116,30 @@ def label_multi_one_hot(list_of_list):
     return labels
 
 
-def mapping(data=load_dataset('go_emotions')):
+def mapping(data=load_dataset('go_emotions'), ekman_fname='data/ekman_mapping.json',
+            sentiment_fname='data/sentiment_mapping.json'):
+    # Create go-emotions label mapping keys
     label_mapping = {}
     obj = data['train'].features['labels'].feature
     num_classes = obj.num_classes
     for i in range(num_classes):
         label_mapping[i] = obj.int2str(i)
-    return label_mapping
+
+    # # Create ekman label mapping keys
+    # with open(ekman_fname) as f:
+    #     ekman_mapping = json.load(f)
+    # ekman_label_mapping = {}
+    # for idx, key in enumerate(ekman_mapping):
+    #     ekman_label_mapping[idx] = key
+    #
+    # # Create sentiment label mapping keys
+    # with open(sentiment_fname) as f:
+    #     sentiment_mapping = json.load(f)
+    # sentiment_label_mapping = {}
+    # for idx, key in enumerate(sentiment_mapping):
+    #     sentiment_label_mapping[idx] = key
+
+    return label_mapping  # , ekman_label_mapping, sentiment_label_mapping
 
 
 def predict(model, data, batch_size=32):
@@ -164,7 +181,7 @@ def visualize_scatter(data_2d, label_ids, label_mapping, figsize=(10, 10)):
     :return: plt
     '''
     cm = plt.get_cmap('gist_rainbow')
-    norm = mpl.colors.Normalize(vmin=0, vmax=max(label_mapping.keys())+1)
+    norm = mpl.colors.Normalize(vmin=0, vmax=max(label_mapping.keys()) + 1)
     cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cm)
 
     plt.figure(figsize=figsize)
@@ -198,7 +215,7 @@ def convert_to_ekman(labels, ekman_fname='data/ekman_mapping.json', data=load_da
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_ekman, idx = {obj.num_classes-1: len(ekman_mapping)}, 0
+    goemotions_to_ekman, idx = {obj.num_classes - 1: len(ekman_mapping)}, 0
 
     # Create mapping of goemotions key to ekman key i.e. dictionary of 28 keys mapped down to 6 ekman emotions
     for idx in range(obj.num_classes):
@@ -226,7 +243,7 @@ def convert_to_sentiment(labels, sentiment_fname='data/sentiment_mapping.json', 
 
     # Create data obj
     obj = data['train'].features['labels'].feature
-    goemotions_to_sentiment, idx = {obj.num_classes-1: len(sentiment_mapping)}, 0
+    goemotions_to_sentiment, idx = {obj.num_classes - 1: len(sentiment_mapping)}, 0
 
     # Create mapping of goemotions key to sentiment key i.e. dictionary of 28 keys mapped down to 3+1 sentiments
     for idx in range(obj.num_classes):
@@ -256,6 +273,18 @@ def reverse_one_hot(labels):
         else:
             output.append([j])
         prev_i = i
+    return output
+
+
+def numeric_to_t5(labels, label_dict):
+    # labels input as list of lists
+    output = []
+    for sample in labels:
+        temp = []
+        for label in sample:
+            temp.append(label_dict[label])
+        # output as "anger, annoyance" from ["anger", "annoyance"]
+        output.append(', '.join(temp))
     return output
 
 
