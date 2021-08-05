@@ -288,6 +288,13 @@ def numeric_to_t5(labels, label_dict):
     return output
 
 
+def process_text(pre_text, list_of_text):
+    output = []
+    for text in list_of_text:
+        output.append(pre_text + ": " + text)
+    return output
+
+
 def gen_tsne_values(high_dim_data):
     tsne_model = TSNE(perplexity=30,
                       n_components=2,
