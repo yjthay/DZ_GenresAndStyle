@@ -17,7 +17,14 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from datasets import load_dataset, list_datasets
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import BertModel, BertTokenizer
+from transformers import (
+    BertModel,
+    BertTokenizer,
+    T5Tokenizer,
+    T5Model,
+    T5ForConditionalGeneration,
+    get_linear_schedule_with_warmup
+)
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
 import json
@@ -284,7 +291,7 @@ def numeric_to_t5(labels, label_dict):
         for label in sample:
             temp.append(label_dict[label])
         # output as "anger, annoyance" from ["anger", "annoyance"]
-        output.append(', '.join(temp))
+        output.append(' , '.join(temp))
     return output
 
 
