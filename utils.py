@@ -144,6 +144,11 @@ def json_mapping(fname='data/ekman_mapping.json'):
     return num_to_str
 
 
+def str_to_num(labels_dict):
+    rev_labels_dict = dict((y, x) for x, y in labels_dict.items())
+    return rev_labels_dict
+
+
 def predict(model, data, batch_size=32):
     '''
     outputs = torch.rand((3,3))
@@ -275,25 +280,6 @@ def reverse_one_hot(labels):
         else:
             output.append([j])
         prev_i = i
-    return output
-
-
-def numeric_to_t5(labels, label_dict):
-    # labels input as list of lists
-    output = []
-    for sample in labels:
-        temp = []
-        for label in sample:
-            temp.append(label_dict[label])
-        # output as "anger, annoyance" from ["anger", "annoyance"]
-        output.append(' , '.join(temp))
-    return output
-
-
-def process_text(pre_text, list_of_text):
-    output = []
-    for text in list_of_text:
-        output.append(pre_text + ": " + text)
     return output
 
 
