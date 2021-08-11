@@ -123,30 +123,25 @@ def label_multi_one_hot(list_of_list):
     return labels
 
 
-def mapping(data=load_dataset('go_emotions'), ekman_fname='data/ekman_mapping.json',
-            sentiment_fname='data/sentiment_mapping.json'):
+def mapping(data=load_dataset('go_emotions')):
     # Create go-emotions label mapping keys
     label_mapping = {}
     obj = data['train'].features['labels'].feature
     num_classes = obj.num_classes
     for i in range(num_classes):
         label_mapping[i] = obj.int2str(i)
+    return label_mapping
 
-    # # Create ekman label mapping keys
-    # with open(ekman_fname) as f:
-    #     ekman_mapping = json.load(f)
-    # ekman_label_mapping = {}
-    # for idx, key in enumerate(ekman_mapping):
-    #     ekman_label_mapping[idx] = key
-    #
-    # # Create sentiment label mapping keys
-    # with open(sentiment_fname) as f:
-    #     sentiment_mapping = json.load(f)
-    # sentiment_label_mapping = {}
-    # for idx, key in enumerate(sentiment_mapping):
-    #     sentiment_label_mapping[idx] = key
 
-    return label_mapping  # , ekman_label_mapping, sentiment_label_mapping
+# Create ekman label mapping keys
+def json_mapping(fname='data/ekman_mapping.json'):
+    # fname='data/sentiment_mapping.json'
+    with open(fname) as f:
+        mapping = json.load(f)
+    num_to_str = {}
+    for idx, key in enumerate(mapping):
+        num_to_str[idx] = key
+    return num_to_str
 
 
 def predict(model, data, batch_size=32):
