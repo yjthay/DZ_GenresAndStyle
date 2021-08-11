@@ -292,3 +292,241 @@ def gen_tsne_values(high_dim_data):
                       init="pca")
     new_values = tsne_model.fit_transform(high_dim_data)
     return new_values
+
+
+class Config:
+    def __init__(self):
+        super(Config, self).__init__()
+
+        self.SEED = 7
+        self.MODEL_PATH = 't5-base'
+
+        # model
+        self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.LR = 2e-5
+        self.OPTIMIZER = 'AdamW'
+        self.CRITERION = 'BCELoss'
+        self.EPOCHS = 1
+
+        # data
+        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
+        self.BATCH_SIZE = 16
+        self.TXT_MAX_LENGTH = 64
+        self.TGT_MAX_LENGTH = 64
+        self.EKMAN_JSON = 'data/ekman_mapping.json'
+        self.SENTI_JSON = 'data/sentiment_mapping.json'
+
+
+config = Config()
+
+
+class T5Dataset(Dataset):
+    def __init__(self, data):
+        super(T5Dataset, self).__init__()
+
+        self.texts, self.labels = data['text'], data['labels']
+
+        self.tokenizer = config.TOKENIZER
+        self.txt_max_length = config.TXT_MAX_LENGTH
+        self.tgt_max_length = config.TGT_MAX_LENGTH
+        self.goemo_mapping, self.ekman_mapping, self.senti_mapping = config.GOEMO_MAPPING, config.EKMAN_MAPPING, config.SENTI_MAPPING
+
+        self.ekman_labels, self.senti_labels = convert_to_ekman(self.labels), convert_to_sentiment(self.labels)
+
+        self.goemo_texts, self.goemo_labels = self._process_text("goemo", self.texts), self._process_text("goemo",
+                                                                                                          self._numeric_to_t5(
+                                                                                                              self.labels,
+                                                                                                              self.goemo_mapping))
+        self.ekman_texts, self.ekman_labels = self._process_text("ekman", self.texts), self._process_text("ekman",
+                                                                                                          self._numeric_to_t5(
+                                                                                                              self.ekman_labels,
+                                                                                                              self.ekman_mapping))
+        self.senti_texts, self.senti_labels = self._process_text("senti", self.texts), self._process_text("senti",
+                                                                                                          self._numeric_to_t5(
+                                                                                                              self.senti_labels,
+                                                                                                              self.senti_mapping))
+
+        self.texts = list(itertools.chain(self.goemo_texts, self.ekman_texts, self.senti_texts))
+        self.labels = list(itertools.chain(self.goemo_labels, self.ekman_labels, self.senti_labels))
+
+    @staticmethod
+    def _numeric_to_t5(labels, label_dict):
+        # labels input as list of lists
+        output = []
+        for sample in labels:
+            temp = []
+            for label in sample:
+                temp.append(label_dict[label])
+            # output as "anger, annoyance" from ["anger" , "annoyance"]
+            output.append(' , '.join(temp))
+        return output
+
+    @staticmethod
+    def _process_text(pre_text, list_of_text):
+        output = []
+        for text in list_of_text:
+            output.append(pre_text + ": " + text)
+        return output
+
+    def __getitem__(self, index):
+        txt_tokenized = self.tokenizer.encode_plus(self.texts[index],
+                                                   max_length=self.txt_max_length,
+                                                   padding='max_length',
+                                                   truncation=True,
+                                                   return_attention_mask=True,
+                                                   return_token_type_ids=False,
+                                                   return_tensors='pt')
+        txt_input_ids = txt_tokenized['input_ids'].to(config.DEVICE)
+        txt_attention_mask = txt_tokenized['attention_mask'].to(config.DEVICE)
+
+        tgt_tokenized = self.tokenizer.encode_plus(self.labels[index],
+                                                   max_length=self.tgt_max_length,
+                                                   padding='max_length',
+                                                   truncation=True,
+                                                   return_attention_mask=True,
+                                                   return_token_type_ids=False,
+                                                   return_tensors='pt')
+        tgt_input_ids = tgt_tokenized['input_ids'].to(config.DEVICE)
+        tgt_attention_mask = tgt_tokenized['attention_mask'].to(config.DEVICE)
+
+        return (txt_input_ids.squeeze(),
+                txt_attention_mask.squeeze(),
+                tgt_input_ids.squeeze(),
+                tgt_attention_mask.squeeze(),
+                self.texts[index],
+                self.labels[index])
+
+    def __len__(self):
+        return len(self.labels)
+
+
+class T5Model(torch.nn.Module):
+    def __init__(self):
+        super(T5Model, self).__init__()
+
+        self.t5_model = T5ForConditionalGeneration.from_pretrained(config.MODEL_PATH)
+
+    def forward(self,
+                input_ids,
+                attention_mask=None,
+                decoder_input_ids=None,
+                decoder_attention_mask=None,
+                lm_labels=None):
+        return self.t5_model(input_ids,
+                             attention_mask=attention_mask,
+                             decoder_input_ids=decoder_input_ids,
+                             decoder_attention_mask=decoder_attention_mask,
+                             labels=lm_labels)
+
+
+# Function for training
+def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
+             weight_decay, show_progress=False, save_path=None):
+    criterion = torch.nn.BCELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    # Construct data loader from training and validation dataset
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+
+    val_losses = []
+    train_losses = []
+
+    num_train = len(train_dataset)
+
+    # Training
+    for epoch in range(epochs):
+        # backprop
+        running_loss = 0.0
+        inner_iter = 0
+        pbar = tqdm(train_loader, position=0, leave=True)
+        epoch_idx = int(epoch + 1)
+        for x_inputs, x_masks, y_inputs, y_masks, _, _ in pbar:
+            pbar.set_description("Processing Epoch %d" % epoch_idx)
+
+            lm_labels = y_inputs
+            lm_labels[lm_labels[:, :] == config.TOKENIZER.pad_token_id] = -100
+
+            optimizer.zero_grad()
+            outputs = model(input_ids=x_inputs,
+                            attention_mask=x_masks,
+                            lm_labels=lm_labels,
+                            decoder_attention_mask=y_masks)
+            loss = outputs[0]
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+
+        # calculate training loss
+        train_loss = running_loss / len(train_loader)  # calculate validation loss
+
+        y_pred, y_true = [], []
+        with torch.no_grad():
+            running_loss = 0.0
+            for x_val_inputs, x_val_masks, y_val_inputs, y_val_masks, x_text, y_labels in val_loader:
+                lm_labels = y_val_inputs
+                lm_labels[lm_labels[:, :] == config.TOKENIZER.pad_token_id] = -100
+                outputs_val = model(input_ids=x_val_inputs,
+                                    attention_mask=x_val_masks,
+                                    lm_labels=lm_labels,
+                                    decoder_attention_mask=y_val_masks)
+                loss = outputs_val[0]
+                running_loss += loss.item()
+
+                pred_ids = model.t5_model.generate(input_ids=x_val_inputs,
+                                                   attention_mask=x_val_masks)
+
+                b_y_pred = testing(pred_ids, config.TOKENIZER)
+
+                # print(tokenizer.decode(pred_ids[0]))
+                y_pred = list(itertools.chain(y_pred, b_y_pred))
+                y_true = list(itertools.chain(y_true, y_labels))
+
+        # calculate validation loss
+        val_loss = running_loss / len(val_loader)  # calculate validation loss
+
+        # print status
+        if show_progress:
+            print('\n Epoch = %d, Train loss = %.5f, Val loss = %.5f' % (epoch_idx, train_loss, val_loss))
+
+        # append training and validation loss
+        val_losses.append(val_loss)
+        train_losses.append(train_loss)
+
+        # save model at each epoch
+        if save_path is not None:
+            save_path_name = save_path + 'epoch_{}_{:.5f}.pt'.format(epoch_idx, val_loss)
+            torch.save(model, save_path_name)
+        pbar.reset()
+
+    return train_losses, val_losses
+
+
+def testing(pred_ids, tokenizer):
+    # Returns one hot encoding of predictions for goemo, ekman and senti
+    y_pred = []
+    for p in pred_ids:
+        str_pred = tokenizer.decode(p)
+        str_pred = str_pred.replace("<pad>", "").replace("</s>", "").strip()
+        str_pred = re.split(', |: ', str_pred)
+        if str_pred[0] == "goemo":
+            try:
+                y_pred.append([str_to_num(config.GOEMO_MAPPING)[string] for string in str_pred[1:]])
+            except:
+                print("Printing unrecognized word in GoEmotions mapping: {}".format(str_pred))
+                y_pred.append([27])  # Append neutral if we cannot find the word
+        elif str_pred[0] == "ekman":
+            try:
+                y_pred.append([str_to_num(config.EKMAN_MAPPING)[string] for string in str_pred[1:]])
+            except:
+                print("Printing unrecognized word in Ekman mapping: {}".format(str_pred))
+                y_pred.append([6])  # Append neutral if we cannot find the word
+        elif str_pred[0] == "senti":
+            try:
+                y_pred.append([str_to_num(config.SENTI_MAPPING)[string] for string in str_pred[1:]])
+            except:
+                print("Printing unrecognized word in Sentiment mapping: {}".format(str_pred))
+                y_pred.append([3])  # Append neutral if we cannot find the word
+        else:
+            print("Using a different hyperparameter other than (goemo, ekman, senti)")
+    return y_pred
