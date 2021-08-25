@@ -56,7 +56,7 @@ class EmotionsDataset(Dataset):
     def __getitem__(self, index):
         # full-BERT forward prop
         x = self.model(input_ids=self.input_ids[None, index], attention_mask=self.attention_mask[None, index])[0]
-        x = x.view(np.prod(x.shape)).detach()  # detach full-BERT computation graph
+        x = x.view(np.prod(x.shape))#.detach()  # detach full-BERT computation graph
         y = self.labels[index]
         return x.float(), y.float()
 
