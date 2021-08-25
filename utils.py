@@ -420,7 +420,7 @@ class T5Model(torch.nn.Module):
 
 # Function for training
 def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progress=False, save_path=None):
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Construct data loader from training and validation dataset
@@ -501,7 +501,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
 
 
 def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progress=False, save_path=None):
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Construct data loader from training and validation dataset
