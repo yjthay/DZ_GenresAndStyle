@@ -30,6 +30,32 @@ import json
 from sklearn.manifold import TSNE
 
 
+class Config:
+    def __init__(self):
+        super(Config, self).__init__()
+
+        self.SEED = 7
+        self.MODEL_PATH = 't5-base'
+
+        # model
+        self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.LR = 2e-5
+        self.OPTIMIZER = 'AdamW'
+        self.CRITERION = 'BCELoss'
+        self.EPOCHS = 1
+
+        # data
+        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
+        self.BATCH_SIZE = 16
+        self.TXT_MAX_LENGTH = 64
+        self.TGT_MAX_LENGTH = 64
+        self.EKMAN_JSON = 'data/ekman_mapping.json'
+        self.SENTI_JSON = 'data/sentiment_mapping.json'
+
+
+config = Config()
+
+
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
     def __init__(self, data, Model=BertModel, Tokenizer=BertTokenizer, max_length=12, bert_type='bert-base-cased',
@@ -56,7 +82,7 @@ class EmotionsDataset(Dataset):
     def __getitem__(self, index):
         # full-BERT forward prop
         x = self.model(input_ids=self.input_ids[None, index], attention_mask=self.attention_mask[None, index])[0]
-        x = x.view(np.prod(x.shape))#.detach()  # detach full-BERT computation graph
+        x = x.view(np.prod(x.shape))  # .detach()  # detach full-BERT computation graph
         y = self.labels[index]
         return x.float(), y.float()
 
@@ -293,32 +319,6 @@ def gen_tsne_values(high_dim_data):
     return new_values
 
 
-class Config:
-    def __init__(self):
-        super(Config, self).__init__()
-
-        self.SEED = 7
-        self.MODEL_PATH = 't5-base'
-
-        # model
-        self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.LR = 2e-5
-        self.OPTIMIZER = 'AdamW'
-        self.CRITERION = 'BCELoss'
-        self.EPOCHS = 1
-
-        # data
-        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
-        self.BATCH_SIZE = 16
-        self.TXT_MAX_LENGTH = 64
-        self.TGT_MAX_LENGTH = 64
-        self.EKMAN_JSON = 'data/ekman_mapping.json'
-        self.SENTI_JSON = 'data/sentiment_mapping.json'
-
-
-config = Config()
-
-
 class T5Dataset(Dataset):
     def __init__(self, data):
         super(T5Dataset, self).__init__()
@@ -419,10 +419,9 @@ class T5Model(torch.nn.Module):
 
 
 # Function for training
-def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
-             weight_decay, show_progress=False, save_path=None):
-    criterion = torch.nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progress=False, save_path=None):
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Construct data loader from training and validation dataset
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -500,9 +499,10 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
 
     return train_losses, val_losses
 
-def train(model, train_dataset, val_dataset, epochs, lr, batch_size, weight_decay, show_progress=False, save_path=None):
-    criterion = torch.nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progress=False, save_path=None):
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Construct data loader from training and validation dataset
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -519,7 +519,7 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, weight_deca
         running_loss = 0.0
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
-        epoch_idx = int(epoch+1)
+        epoch_idx = int(epoch + 1)
         for x, y in pbar:
             pbar.set_description("Processing Epoch %d" % epoch_idx)
 
