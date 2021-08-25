@@ -500,6 +500,65 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
 
     return train_losses, val_losses
 
+def train(model, train_dataset, val_dataset, epochs, lr, batch_size, weight_decay, show_progress=False, save_path=None):
+    criterion = torch.nn.BCELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    # Construct data loader from training and validation dataset
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+
+    val_losses = []
+    train_losses = []
+
+    num_train = len(train_dataset)
+
+    # Training
+    for epoch in range(epochs):
+        # backprop
+        running_loss = 0.0
+        inner_iter = 0
+        pbar = tqdm(train_loader, position=0, leave=True)
+        epoch_idx = int(epoch+1)
+        for x, y in pbar:
+            pbar.set_description("Processing Epoch %d" % epoch_idx)
+
+            outputs = model(x)
+            optimizer.zero_grad()
+            # print(outputs.type(),y.type())
+            loss = criterion(outputs, y)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+
+        # calculate training loss
+        train_loss = running_loss / len(train_loader)  # calculate validation loss
+
+        with torch.no_grad():
+            running_loss = 0.0
+            for x_val, y_val in val_loader:
+                outputs_val = model(x_val)
+                running_loss += criterion(outputs_val, y_val).item()
+
+        # calculate validation loss
+        val_loss = running_loss / len(val_loader)  # calculate validation loss
+
+        # print status
+        if show_progress:
+            print('\n Epoch = %d, Train loss = %.5f, Val loss = %.5f' % (epoch_idx, train_loss, val_loss))
+
+        # append training and validation loss
+        val_losses.append(val_loss)
+        train_losses.append(train_loss)
+
+        # save model at each epoch
+        if save_path is not None:
+            save_path_name = save_path + 'epoch_{}_{:.5f}.pt'.format(epoch_idx, val_loss)
+            torch.save(model, save_path_name)
+        pbar.reset()
+
+    return train_losses, val_losses
+
 
 def testing_t5(pred_ids, tokenizer):
     # Returns one hot encoding of predictions for goemo, ekman and senti
