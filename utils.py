@@ -22,8 +22,7 @@ from transformers import (
     BertTokenizer,
     T5Tokenizer,
     T5Model,
-    T5ForConditionalGeneration,
-    get_linear_schedule_with_warmup
+    T5ForConditionalGeneration
 )
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
@@ -476,7 +475,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
                 pred_ids = model.t5_model.generate(input_ids=x_val_inputs,
                                                    attention_mask=x_val_masks)
 
-                b_y_pred = testing(pred_ids, config.TOKENIZER)
+                b_y_pred = testing_t5(pred_ids, config.TOKENIZER)
 
                 # print(tokenizer.decode(pred_ids[0]))
                 y_pred = list(itertools.chain(y_pred, b_y_pred))
@@ -502,7 +501,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size,
     return train_losses, val_losses
 
 
-def testing(pred_ids, tokenizer):
+def testing_t5(pred_ids, tokenizer):
     # Returns one hot encoding of predictions for goemo, ekman and senti
     y_pred = []
     for p in pred_ids:
@@ -529,4 +528,5 @@ def testing(pred_ids, tokenizer):
                 y_pred.append([3])  # Append neutral if we cannot find the word
         else:
             print("Using a different hyperparameter other than (goemo, ekman, senti)")
+            print(str_pred)
     return y_pred
