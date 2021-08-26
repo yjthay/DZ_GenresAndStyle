@@ -81,27 +81,30 @@ class EmotionsDataset(Dataset):
 
     def __getitem__(self, index):
         # full-BERT forward prop
-        x = self.model(input_ids=self.input_ids[None, index], attention_mask=self.attention_mask[None, index])[0]
-        x = x.view(np.prod(x.shape))  # .detach()  # detach full-BERT computation graph
+        # x = self.model(input_ids=self.input_ids[None, index], attention_mask=self.attention_mask[None, index])[0]
+        # x = x.view(np.prod(x.shape))  # .detach()  # detach full-BERT computation graph
+        input_ids, attention_mask = self.input_ids[None, index], attention_mask = self.attention_mask[None, index]
         y = self.labels[index]
-        return x.float(), y.float()
+        return input_ids.float(), attention_mask.float(), y.float()
 
     def __len__(self):
         return len(self.labels)
 
 
 # Fully connected layers after BERT
-class Layers(torch.nn.Module):
+class BERT_Model(torch.nn.Module):
     # A group of fully connected layers with adjustable layers size
-    def __init__(self, dims):
+    def __init__(self, dims, Model=BertModel, bert_type='bert-base-cased', device='cuda'):
         super().__init__()
         self.dims = dims
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
         )
+        self.model = Model.from_pretrained(bert_type).to(device)
 
-    def forward(self, x):
+    def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
+        x = self.model(input_ids=self.input_ids, attention_mask=self.attention_mask)[0]
         for i in range(len(self.dims) - 2):
             layer = self.layers[i]
             x = layer(x).clamp(min=0)
@@ -520,10 +523,10 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
         epoch_idx = int(epoch + 1)
-        for x, y in pbar:
+        for input_id, attention_mask, y in pbar:
             pbar.set_description("Processing Epoch %d" % epoch_idx)
 
-            outputs = model(x)
+            outputs = model(input_id, attention_mask)
             optimizer.zero_grad()
             # print(outputs.type(),y.type())
             loss = criterion(outputs, y)
