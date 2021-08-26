@@ -98,14 +98,15 @@ class BERT_Model(torch.nn.Module):
         super().__init__()
         self.dims = dims
         self.layers = torch.nn.ModuleList(
-            [torch.nn.Linear(dims[i], dims[i + 1]) for i in range(len(dims) - 1)]
+            [torch.nn.Linear(dims[i], dims[i + 1], device=device) for i in range(len(dims) - 1)]
         )
         self.model = Model.from_pretrained(bert_type).to(device)
 
     def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
         x = self.model(input_ids=input_ids, attention_mask=attention_mask)[0]
-        x = x.view(np.prod(x.shape)).float()
+        batch, max_length, hidden = x.shape
+        x = x.view(batch, max_length*hidden).float()
         for i in range(len(self.dims) - 2):
             layer = self.layers[i]
             x = layer(x).clamp(min=0)
