@@ -541,8 +541,8 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
 
         with torch.no_grad():
             running_loss = 0.0
-            for x_val, y_val in val_loader:
-                outputs_val = model(x_val)
+            for input_id_val, attention_mask_val, y_val in val_loader:
+                outputs_val = model(input_id_val, attention_mask_val)
                 running_loss += criterion(outputs_val, y_val).item()
 
         # calculate validation loss
