@@ -30,37 +30,6 @@ import json
 from sklearn.manifold import TSNE
 
 
-class Config:
-    def __init__(self):
-        super(Config, self).__init__()
-
-        self.SEED = 7
-        self.MODEL_PATH = 't5-base'
-
-        # model
-        self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.LR = 5e-5
-        self.OPTIMIZER = 'AdamW'
-        self.CRITERION = 'BCELoss'
-        self.EPOCHS = 1
-
-        # data
-        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
-        self.BATCH_SIZE = 16
-        self.TXT_MAX_LENGTH = 64
-        self.TGT_MAX_LENGTH = 64
-        self.EKMAN_JSON = 'data/ekman_mapping.json'
-        self.SENTI_JSON = 'data/sentiment_mapping.json'
-        self.EKMAN_MAPPING = json_mapping(self.EKMAN_JSON)
-        self.EKMAN_MAPPING[6] = 'neutral'
-        self.SENTI_MAPPING = json_mapping(self.SENTI_JSON)
-        self.SENTI_MAPPING[3] = 'neutral'
-        self.GOEMO_MAPPING = mapping()
-
-
-config = Config()
-
-
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
     def __init__(self, data, Model=BertModel, Tokenizer=BertTokenizer, max_length=12, bert_type='bert-base-cased',
@@ -599,3 +568,33 @@ def testing_t5(pred_ids, tokenizer):
             print("Using a different hyperparameter other than (goemo, ekman, senti)")
             print(str_pred)
     return y_pred
+
+class Config:
+    def __init__(self):
+        super(Config, self).__init__()
+
+        self.SEED = 7
+        self.MODEL_PATH = 't5-base'
+
+        # model
+        self.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.LR = 5e-5
+        self.OPTIMIZER = 'AdamW'
+        self.CRITERION = 'BCELoss'
+        self.EPOCHS = 1
+
+        # data
+        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
+        self.BATCH_SIZE = 16
+        self.TXT_MAX_LENGTH = 64
+        self.TGT_MAX_LENGTH = 64
+        self.EKMAN_JSON = 'data/ekman_mapping.json'
+        self.SENTI_JSON = 'data/sentiment_mapping.json'
+        self.EKMAN_MAPPING = json_mapping(self.EKMAN_JSON)
+        self.EKMAN_MAPPING[6] = 'neutral'
+        self.SENTI_MAPPING = json_mapping(self.SENTI_JSON)
+        self.SENTI_MAPPING[3] = 'neutral'
+        self.GOEMO_MAPPING = mapping()
+
+
+config = Config()
