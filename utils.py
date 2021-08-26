@@ -80,7 +80,7 @@ class BERT_Model(torch.nn.Module):
         # ReLU activations in hidden layers
         x = self.model(input_ids=input_ids, attention_mask=attention_mask)[0]
         batch, max_length, hidden = x.shape
-        x = x.view(batch, max_length*hidden).float()
+        x = x.view(batch, max_length * hidden).float()
         for i in range(len(self.dims) - 2):
             layer = self.layers[i]
             x = layer(x).clamp(min=0)
@@ -568,6 +568,7 @@ def testing_t5(pred_ids, tokenizer):
             print("Using a different hyperparameter other than (goemo, ekman, senti)")
             print(str_pred)
     return y_pred
+
 
 class Config:
     def __init__(self):
