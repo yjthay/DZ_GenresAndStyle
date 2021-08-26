@@ -85,7 +85,7 @@ class EmotionsDataset(Dataset):
         # x = x.view(np.prod(x.shape))  # .detach()  # detach full-BERT computation graph
         input_ids, attention_mask = self.input_ids[None, index], self.attention_mask[None, index]
         y = self.labels[index]
-        return input_ids.float(), attention_mask.float(), y.float()
+        return input_ids, attention_mask, y.float()
 
     def __len__(self):
         return len(self.labels)
@@ -104,7 +104,7 @@ class BERT_Model(torch.nn.Module):
 
     def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
-        x = self.model(input_ids=input_ids, attention_mask=attention_mask)[0]
+        x = self.model(input_ids=input_ids, attention_mask=attention_mask)[0].float()
         for i in range(len(self.dims) - 2):
             layer = self.layers[i]
             x = layer(x).clamp(min=0)
