@@ -162,8 +162,8 @@ def predict(model, data, batch_size=32):
     n = len(data)
     loader = DataLoader(data, batch_size=batch_size)
     pred = []
-    for x, y in loader:
-        y_pred = model(x)
+    for input_ids, attention_mask, y in loader:
+        y_pred = model(input_ids, attention_mask)
         pred += y_pred.tolist()
     return np.array(pred)
 
