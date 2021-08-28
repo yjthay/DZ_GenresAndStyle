@@ -18,11 +18,8 @@ from datasets import load_dataset, list_datasets
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
-    BertModel,
-    BertTokenizer,
-    T5Tokenizer,
-    T5Model,
-    T5ForConditionalGeneration
+    AutoTokenizer,
+    AutoModel
 )
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
@@ -32,10 +29,9 @@ from sklearn.manifold import TSNE
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
-    def __init__(self, data, Model=BertModel, Tokenizer=BertTokenizer, max_length=12, bert_type='bert-base-cased',
+    def __init__(self, data, max_length=12, bert_type='bert-base-cased',
                  device='cuda'):
-        self.tokenizer = Tokenizer.from_pretrained(bert_type)
-        self.model = Model.from_pretrained(bert_type).to(device)
+        self.tokenizer = AutoTokenizer.from_pretrained(bert_type)
         self.device = device
 
         # Loading the data into text and labels
@@ -54,9 +50,6 @@ class EmotionsDataset(Dataset):
         self.labels = labels
 
     def __getitem__(self, index):
-        # full-BERT forward prop
-        # x = self.model(input_ids=self.input_ids[None, index], attention_mask=self.attention_mask[None, index])[0]
-        # x = x.view(np.prod(x.shape))  # .detach()  # detach full-BERT computation graph
         input_ids, attention_mask = self.input_ids[index], self.attention_mask[index]
         y = self.labels[index]
         return input_ids, attention_mask, y.float()
@@ -68,13 +61,13 @@ class EmotionsDataset(Dataset):
 # Fully connected layers after BERT
 class BERT_Model(torch.nn.Module):
     # A group of fully connected layers with adjustable layers size
-    def __init__(self, dims, Model=BertModel, bert_type='bert-base-cased', device='cuda'):
+    def __init__(self, dims, bert_type='bert-base-cased', device='cuda'):
         super().__init__()
         self.dims = dims
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(dims[i], dims[i + 1], device=device) for i in range(len(dims) - 1)]
         )
-        self.model = Model.from_pretrained(bert_type).to(device)
+        self.model = AutoModel.from_pretrained(bert_type).to(device)
 
     def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
@@ -449,7 +442,6 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
         # calculate training loss
         train_loss = running_loss / len(train_loader)  # calculate validation loss
 
-        model.eval()
         y_pred, y_true = [], []
         with torch.no_grad():
             running_loss = 0.0
@@ -527,7 +519,6 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
         # calculate training loss
         train_loss = running_loss / len(train_loader)  # calculate validation loss
 
-        model.eval()
         with torch.no_grad():
             running_loss = 0.0
             for input_id_val, attention_mask_val, y_val in val_loader:
