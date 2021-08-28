@@ -19,7 +19,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
     AutoTokenizer,
-    AutoModel
+    AutoModelForSequenceClassification,
+    T5ForConditionalGeneration,
 )
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
 import matplotlib as mpl
