@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
     AutoTokenizer,
-    AutoModelForSequenceClassification,
+    AutoModel,
     T5ForConditionalGeneration,
 )
 from sklearn.metrics import multilabel_confusion_matrix, f1_score
@@ -68,7 +68,7 @@ class BERT_Model(torch.nn.Module):
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(dims[i], dims[i + 1], device=device) for i in range(len(dims) - 1)]
         )
-        self.model = AutoModelForSequenceClassification.from_pretrained(bert_type).to(device)
+        self.model = AutoModel.from_pretrained(bert_type).to(device)
 
     def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
