@@ -162,8 +162,10 @@ def predict(model, data, batch_size=32):
     n = len(data)
     loader = DataLoader(data, batch_size=batch_size)
     pred = []
+    model.eval()
     for input_ids, attention_mask, y in loader:
-        y_pred = model(input_ids, attention_mask)
+        with torch.no_grad():
+            y_pred = model(input_ids, attention_mask)
         pred += y_pred.tolist()
     return np.array(pred)
 
@@ -299,7 +301,7 @@ def gen_tsne_values(high_dim_data):
 
 
 class T5Dataset(Dataset):
-    def __init__(self, data):
+    def __init__(self, data, type="all"):
         super(T5Dataset, self).__init__()
 
         self.texts, self.labels = data['text'], data['labels']
@@ -323,9 +325,18 @@ class T5Dataset(Dataset):
                                                                                                           self._numeric_to_t5(
                                                                                                               self.senti_labels,
                                                                                                               self.senti_mapping))
-
-        self.texts = list(itertools.chain(self.goemo_texts, self.ekman_texts, self.senti_texts))
-        self.labels = list(itertools.chain(self.goemo_labels, self.ekman_labels, self.senti_labels))
+        if type.lower() == 'goemo':
+            self.texts = list(itertools.chain(self.goemo_texts))
+            self.labels = list(itertools.chain(self.goemo_labels))
+        elif type.lower == 'ekman':
+            self.texts = list(itertools.chain(self.ekman_texts))
+            self.labels = list(itertools.chain(self.ekman_labels))
+        elif type.lower == 'senti':
+            self.texts = list(itertools.chain(self.senti_texts))
+            self.labels = list(itertools.chain(self.senti_labels))
+        else:
+            self.texts = list(itertools.chain(self.goemo_texts, self.ekman_texts, self.senti_texts))
+            self.labels = list(itertools.chain(self.goemo_labels, self.ekman_labels, self.senti_labels))
 
     @staticmethod
     def _numeric_to_t5(labels, label_dict):
@@ -418,6 +429,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
         epoch_idx = int(epoch + 1)
+        model.train()
         for x_inputs, x_masks, y_inputs, y_masks, _, _ in pbar:
             pbar.set_description("Processing Epoch %d" % epoch_idx)
 
@@ -437,6 +449,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
         # calculate training loss
         train_loss = running_loss / len(train_loader)  # calculate validation loss
 
+        model.eval()
         y_pred, y_true = [], []
         with torch.no_grad():
             running_loss = 0.0
@@ -499,6 +512,7 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
         epoch_idx = int(epoch + 1)
+        model.train()
         for input_id, attention_mask, y in pbar:
             pbar.set_description("Processing Epoch %d" % epoch_idx)
 
@@ -513,6 +527,7 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
         # calculate training loss
         train_loss = running_loss / len(train_loader)  # calculate validation loss
 
+        model.eval()
         with torch.no_grad():
             running_loss = 0.0
             for input_id_val, attention_mask_val, y_val in val_loader:
