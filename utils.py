@@ -591,7 +591,7 @@ class Config:
         self.EPOCHS = 1
 
         # data
-        self.TOKENIZER = T5Tokenizer.from_pretrained(self.MODEL_PATH)
+        self.TOKENIZER = AutoTokenizer.from_pretrained(self.MODEL_PATH)
         self.BATCH_SIZE = 16
         self.TXT_MAX_LENGTH = 64
         self.TGT_MAX_LENGTH = 64
