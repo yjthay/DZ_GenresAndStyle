@@ -68,7 +68,7 @@ class BERT_Model(torch.nn.Module):
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(dims[i], dims[i + 1], device=device) for i in range(len(dims) - 1)]
         )
-        self.model = AutoModel.from_pretrained(bert_type).to(device)
+        self.model = AutoModelForSequenceClassification.from_pretrained(bert_type).to(device)
 
     def forward(self, input_ids, attention_mask):
         # ReLU activations in hidden layers
