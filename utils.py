@@ -546,35 +546,41 @@ def train(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progre
     return train_losses, val_losses
 
 
-def testing_t5(pred_ids, tokenizer):
-    # Returns one hot encoding of predictions for goemo, ekman and senti
-    y_pred = []
-    for p in pred_ids:
-        str_pred = tokenizer.decode(p)
+def predict_t5(model, t5_dataset, batch_size=32):
+    data_loader = DataLoader(t5_dataset, batch_size=batch_size)
+    pred = []
+    model.eval()
+    for x_val_inputs, x_val_masks, _, _, _, _ in data_loader:
+        with torch.no_grad():
+            b_y_pred = model.t5_model.generate(input_ids=x_val_inputs, attention_mask=x_val_masks)
+        pred += b_y_pred.tolist()
+    output = []
+    for p in y_pred:
+        str_pred = config.TOKENIZER.decode(p)
         str_pred = str_pred.replace("<pad>", "").replace("</s>", "").strip()
         str_pred = re.split(', |: ', str_pred)
         if str_pred[0] == "goemo":
             try:
-                y_pred.append([str_to_num(config.GOEMO_MAPPING)[string] for string in str_pred[1:]])
+                output.append([str_to_num(config.GOEMO_MAPPING)[string] for string in str_pred[1:]])
             except:
                 print("Printing unrecognized word in GoEmotions mapping: {}".format(str_pred))
-                y_pred.append([27])  # Append neutral if we cannot find the word
+                output.append([27])  # Append neutral if we cannot find the word
         elif str_pred[0] == "ekman":
             try:
-                y_pred.append([str_to_num(config.EKMAN_MAPPING)[string] for string in str_pred[1:]])
+                output.append([str_to_num(config.EKMAN_MAPPING)[string] for string in str_pred[1:]])
             except:
                 print("Printing unrecognized word in Ekman mapping: {}".format(str_pred))
-                y_pred.append([6])  # Append neutral if we cannot find the word
+                output.append([6])  # Append neutral if we cannot find the word
         elif str_pred[0] == "senti":
             try:
-                y_pred.append([str_to_num(config.SENTI_MAPPING)[string] for string in str_pred[1:]])
+                output.append([str_to_num(config.SENTI_MAPPING)[string] for string in str_pred[1:]])
             except:
                 print("Printing unrecognized word in Sentiment mapping: {}".format(str_pred))
-                y_pred.append([3])  # Append neutral if we cannot find the word
+                output.append([3])  # Append neutral if we cannot find the word
         else:
             print("Using a different hyperparameter other than (goemo, ekman, senti)")
             print(str_pred)
-    return y_pred
+    return output
 
 
 class Config:
