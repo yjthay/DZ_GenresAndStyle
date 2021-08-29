@@ -580,7 +580,7 @@ def predict_t5(model, t5_dataset, batch_size=32):
         else:
             print("Using a different hyperparameter other than (goemo, ekman, senti)")
             print(str_pred)
-    return output
+    return label_multi_one_hot(output)
 
 
 class Config:
