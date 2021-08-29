@@ -295,9 +295,9 @@ def gen_tsne_values(high_dim_data):
 
 
 class T5Dataset(Dataset):
-    def __init__(self, data, type="all"):
+    def __init__(self, data, type="all", device='cuda'):
         super(T5Dataset, self).__init__()
-
+        self.device = device
         self.texts, self.labels = data['text'], data['labels']
 
         self.tokenizer = config.TOKENIZER
@@ -359,8 +359,8 @@ class T5Dataset(Dataset):
                                                    return_attention_mask=True,
                                                    return_token_type_ids=False,
                                                    return_tensors='pt')
-        txt_input_ids = txt_tokenized['input_ids'].to(config.DEVICE)
-        txt_attention_mask = txt_tokenized['attention_mask'].to(config.DEVICE)
+        txt_input_ids = txt_tokenized['input_ids'].to(self.device)
+        txt_attention_mask = txt_tokenized['attention_mask'].to(self.device)
 
         tgt_tokenized = self.tokenizer.encode_plus(self.labels[index],
                                                    max_length=self.tgt_max_length,
@@ -369,8 +369,8 @@ class T5Dataset(Dataset):
                                                    return_attention_mask=True,
                                                    return_token_type_ids=False,
                                                    return_tensors='pt')
-        tgt_input_ids = tgt_tokenized['input_ids'].to(config.DEVICE)
-        tgt_attention_mask = tgt_tokenized['attention_mask'].to(config.DEVICE)
+        tgt_input_ids = tgt_tokenized['input_ids'].to(self.device)
+        tgt_attention_mask = tgt_tokenized['attention_mask'].to(self.device)
 
         return (txt_input_ids.squeeze(),
                 txt_attention_mask.squeeze(),
