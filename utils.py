@@ -555,7 +555,7 @@ def predict_t5(model, t5_dataset, batch_size=32):
             b_y_pred = model.t5_model.generate(input_ids=x_val_inputs, attention_mask=x_val_masks)
         pred += b_y_pred.tolist()
     output = []
-    for p in y_pred:
+    for p in pred:
         str_pred = config.TOKENIZER.decode(p)
         str_pred = str_pred.replace("<pad>", "").replace("</s>", "").strip()
         str_pred = re.split(', |: ', str_pred)
