@@ -326,10 +326,10 @@ class T5Dataset(Dataset):
         if type.lower() == 'goemo':
             self.texts = list(itertools.chain(self.goemo_texts))
             self.labels = list(itertools.chain(self.goemo_labels))
-        elif type.lower == 'ekman':
+        elif type.lower() == 'ekman':
             self.texts = list(itertools.chain(self.ekman_texts))
             self.labels = list(itertools.chain(self.ekman_labels))
-        elif type.lower == 'senti':
+        elif type.lower() == 'senti':
             self.texts = list(itertools.chain(self.senti_texts))
             self.labels = list(itertools.chain(self.senti_labels))
         else:
