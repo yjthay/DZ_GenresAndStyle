@@ -30,13 +30,17 @@ from sklearn.manifold import TSNE
 
 # Load Reddit comments from list of list (from HuggingFace) run them through BERT Tokenzier and Model, using them to transform raw text input into PyTorch tensor
 class EmotionsDataset(Dataset):
-    def __init__(self, data, max_length=12, bert_type='bert-base-cased',
-                 device='cuda'):
+    def __init__(self, data, type=None, max_length=64, bert_type='bert-base-cased', device='cuda'):
         self.tokenizer = AutoTokenizer.from_pretrained(bert_type)
         self.device = device
 
         # Loading the data into text and labels
-        text, labels = data['text'], data['labels']
+        if type == 'ekman':
+            text, labels = data['text'], convert_to_ekman(data['labels'])
+        elif type == 'senti':
+            text, labels = data['text'], convert_to_sentiment(data['labels'])
+        else:
+            text, labels = data['text'], data['labels']
 
         # Tokenize the text and extract input_ids and attention_mask (ignoring
         tokens = self.tokenizer(text, padding='max_length', truncation=True, max_length=max_length, return_tensors="pt")
