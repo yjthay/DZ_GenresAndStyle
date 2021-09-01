@@ -303,6 +303,7 @@ class T5Dataset(Dataset):
         super(T5Dataset, self).__init__()
         self.device = device
         self.texts, self.labels = data['text'], data['labels']
+        # self.samples = np.random.choice(range(len(data['text'])), size=samples)
 
         self.tokenizer = config.TOKENIZER
         self.txt_max_length = config.TXT_MAX_LENGTH
@@ -469,7 +470,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
                 # y_pred = list(itertools.chain(y_pred, b_y_pred))
                 # y_true = list(itertools.chain(y_true, y_labels))
 
-        y_pred = predict_t5(model, val_dataset)
+        # y_pred = predict_t5(model, val_dataset)
         # calculate validation loss
         val_loss = running_loss / len(val_loader)  # calculate validation loss
 
