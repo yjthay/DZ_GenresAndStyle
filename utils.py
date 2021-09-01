@@ -299,43 +299,56 @@ def gen_tsne_values(high_dim_data):
 
 
 class T5Dataset(Dataset):
-    def __init__(self, data, type="all", device='cuda'):
+    def __init__(self, data, goemo_ratio=1 / 3, type="all", device='cuda'):
         super(T5Dataset, self).__init__()
         self.device = device
         self.texts, self.labels = data['text'], data['labels']
-        # self.samples = np.random.choice(range(len(data['text'])), size=samples)
 
         self.tokenizer = config.TOKENIZER
         self.txt_max_length = config.TXT_MAX_LENGTH
         self.tgt_max_length = config.TGT_MAX_LENGTH
         self.goemo_mapping, self.ekman_mapping, self.senti_mapping = config.GOEMO_MAPPING, config.EKMAN_MAPPING, config.SENTI_MAPPING
 
-        self.ekman_labels, self.senti_labels = convert_to_ekman(self.labels), convert_to_sentiment(self.labels)
+        self.x, self.y = [], []
+        for text, label in zip(self.texts, self.labels):
+            choice = np.random.rand()
+            if choice <= goemo_ratio:
+                self.x.append(self._process_text("goemo", [text]))
+                self.y.append(self._process_text("goemo", self._numeric_to_t5([label], self.goemo_mapping)))
+            elif goemo_ratio < choice < goemo_ratio + (1 - goemo_ratio / 2.):
+                self.x.append(self._process_text("ekman", [text]))
+                self.y.append(
+                    self._process_text("ekman", self._numeric_to_t5(convert_to_ekman([label]), self.ekman_mapping)))
+            else:
+                self.x.append(self._process_text("senti", [text]))
+                self.y.append(
+                    self._process_text("senti", self._numeric_to_t5(convert_to_sentiment([label]), self.senti_mapping)))
 
-        self.goemo_texts, self.goemo_labels = self._process_text("goemo", self.texts), self._process_text("goemo",
-                                                                                                          self._numeric_to_t5(
-                                                                                                              self.labels,
-                                                                                                              self.goemo_mapping))
-        self.ekman_texts, self.ekman_labels = self._process_text("ekman", self.texts), self._process_text("ekman",
-                                                                                                          self._numeric_to_t5(
-                                                                                                              self.ekman_labels,
-                                                                                                              self.ekman_mapping))
-        self.senti_texts, self.senti_labels = self._process_text("senti", self.texts), self._process_text("senti",
-                                                                                                          self._numeric_to_t5(
-                                                                                                              self.senti_labels,
-                                                                                                              self.senti_mapping))
-        if type.lower() == 'goemo':
-            self.texts = list(itertools.chain(self.goemo_texts))
-            self.labels = list(itertools.chain(self.goemo_labels))
-        elif type.lower() == 'ekman':
-            self.texts = list(itertools.chain(self.ekman_texts))
-            self.labels = list(itertools.chain(self.ekman_labels))
-        elif type.lower() == 'senti':
-            self.texts = list(itertools.chain(self.senti_texts))
-            self.labels = list(itertools.chain(self.senti_labels))
-        else:
-            self.texts = list(itertools.chain(self.goemo_texts, self.ekman_texts, self.senti_texts))
-            self.labels = list(itertools.chain(self.goemo_labels, self.ekman_labels, self.senti_labels))
+        self.texts, self.labels = list(itertools.chain(*self.x)), list(itertools.chain(*self.y))
+        # self.goemo_texts, self.goemo_labels = self._process_text("goemo", self.texts), self._process_text("goemo",
+        #                                                                                                   self._numeric_to_t5(
+        #                                                                                                       self.labels,
+        #                                                                                                       self.goemo_mapping))
+        # self.ekman_texts, self.ekman_labels = self._process_text("ekman", self.texts), self._process_text("ekman",
+        #                                                                                                   self._numeric_to_t5(
+        #                                                                                                       self.ekman_labels,
+        #                                                                                                       self.ekman_mapping))
+        # self.senti_texts, self.senti_labels = self._process_text("senti", self.texts), self._process_text("senti",
+        #                                                                                                   self._numeric_to_t5(
+        #                                                                                                       self.senti_labels,
+        #                                                                                                       self.senti_mapping))
+        # if type.lower() == 'goemo':
+        #     self.texts = list(itertools.chain(self.goemo_texts))
+        #     self.labels = list(itertools.chain(self.goemo_labels))
+        # elif type.lower() == 'ekman':
+        #     self.texts = list(itertools.chain(self.ekman_texts))
+        #     self.labels = list(itertools.chain(self.ekman_labels))
+        # elif type.lower() == 'senti':
+        #     self.texts = list(itertools.chain(self.senti_texts))
+        #     self.labels = list(itertools.chain(self.senti_labels))
+        # else:
+        #     self.texts = list(itertools.chain(self.goemo_texts, self.ekman_texts, self.senti_texts))
+        #     self.labels = list(itertools.chain(self.goemo_labels, self.ekman_labels, self.senti_labels))
 
     @staticmethod
     def _numeric_to_t5(labels, label_dict):
