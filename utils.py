@@ -447,7 +447,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
         # calculate training loss
         train_loss = running_loss / len(train_loader)  # calculate validation loss
 
-        y_pred, y_true = [], []
+        # y_pred, y_true = [], []
         with torch.no_grad():
             running_loss = 0.0
             for x_val_inputs, x_val_masks, y_val_inputs, y_val_masks, x_text, y_labels in val_loader:
@@ -460,15 +460,16 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
                 loss = outputs_val[0]
                 running_loss += loss.item()
 
-                pred_ids = model.t5_model.generate(input_ids=x_val_inputs,
-                                                   attention_mask=x_val_masks)
+                # pred_ids = model.t5_model.generate(input_ids=x_val_inputs,
+                #                                    attention_mask=x_val_masks)
 
-                b_y_pred = testing_t5(pred_ids, config.TOKENIZER)
+                # b_y_pred = predict_t5(model, val_dataset)
 
                 # print(tokenizer.decode(pred_ids[0]))
-                y_pred = list(itertools.chain(y_pred, b_y_pred))
-                y_true = list(itertools.chain(y_true, y_labels))
+                # y_pred = list(itertools.chain(y_pred, b_y_pred))
+                # y_true = list(itertools.chain(y_true, y_labels))
 
+        y_pred = predict_t5(model, val_dataset)
         # calculate validation loss
         val_loss = running_loss / len(val_loader)  # calculate validation loss
 
