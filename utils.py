@@ -421,22 +421,21 @@ class T5Model(torch.nn.Module):
 
 
 # Function for training
-def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_progress=False, save_path=None):
+def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, save_path=None):
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # Construct data loader from training and validation dataset
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    val_loader = DataLoader(T5Dataset(data['validation'], goemo_ratio=1.0), batch_size=batch_size)
 
     val_losses = []
     train_losses = []
 
-    num_train = len(train_dataset)
     best_model, best_val_loss = None, np.inf
     # Training
     for epoch in range(epochs):
         # backprop
+        train_loader = DataLoader(T5Dataset(data['train'], goemo_ratio=ratio), batch_size=batch_size, shuffle=True)
         running_loss = 0.0
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
