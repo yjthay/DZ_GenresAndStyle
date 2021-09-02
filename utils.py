@@ -421,7 +421,7 @@ class T5Model(torch.nn.Module):
 
 
 # Function for training
-def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, save_path=None):
+def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, show_progress=False, save_path=None):
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
@@ -435,7 +435,7 @@ def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, sa
     # Training
     for epoch in range(epochs):
         # backprop
-        train_loader = DataLoader(T5Dataset(data['train'], goemo_ratio=ratio), batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(T5Dataset(data['train'], goemo_ratio=goemo_ratio), batch_size=batch_size, shuffle=True)
         running_loss = 0.0
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
@@ -503,7 +503,7 @@ def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, sa
         pbar.reset()
     # save best model
     if save_path is not None:
-        save_path_name = save_path + 'ratio_{}_{:.5f}.pt'.format(ratio,best_val_loss)
+        save_path_name = save_path + 'ratio_{}_{:.5f}.pt'.format(goemo_ratio,best_val_loss)
         torch.save(best_model, save_path_name)
 
     return train_losses, val_losses
