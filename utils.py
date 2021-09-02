@@ -433,7 +433,7 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
     train_losses = []
 
     num_train = len(train_dataset)
-
+    best_model, best_val_loss = None, np.inf
     # Training
     for epoch in range(epochs):
         # backprop
@@ -495,11 +495,15 @@ def train_T5(model, train_dataset, val_dataset, epochs, lr, batch_size, show_pro
         val_losses.append(val_loss)
         train_losses.append(train_loss)
 
-        # save model at each epoch
-        if save_path is not None:
-            save_path_name = save_path + 'epoch_{}_{:.5f}.pt'.format(epoch_idx, val_loss)
-            torch.save(model, save_path_name)
+        if best_val_loss > val_loss:
+            best_val_loss = val_loss
+            best_model = model
+
         pbar.reset()
+    # save best model
+    if save_path is not None:
+        save_path_name = save_path + 'epoch_{}_{:.5f}.pt'.format(epoch_idx, val_loss)
+        torch.save(best_model, save_path_name)
 
     return train_losses, val_losses
 
