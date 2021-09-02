@@ -497,6 +497,8 @@ def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, sa
         if best_val_loss > val_loss:
             best_val_loss = val_loss
             best_model = model
+        else:
+            break
 
         pbar.reset()
     # save best model
