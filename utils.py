@@ -503,7 +503,7 @@ def train_T5(model, data, ratio, epochs, lr, batch_size, show_progress=False, sa
         pbar.reset()
     # save best model
     if save_path is not None:
-        save_path_name = save_path + 'epoch_{}_{:.5f}.pt'.format(epoch_idx, val_loss)
+        save_path_name = save_path + 'ratio_{}_{:.5f}.pt'.format(ratio,best_val_loss)
         torch.save(best_model, save_path_name)
 
     return train_losses, val_losses
