@@ -53,6 +53,7 @@ class EmotionsDataset(Dataset):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
         self.labels = labels
+        self.text = data['text']
 
     def __getitem__(self, index):
         input_ids, attention_mask = self.input_ids[index], self.attention_mask[index]
@@ -636,3 +637,40 @@ class Config:
 
 
 config = Config()
+
+
+def gen_train_args(bert_type, out_path='/content/drive/MyDrive/DeepZen/model/epochs/'):
+    out_path = out_path + bert_type + '/'
+    train_args = {
+        'n_gpu': 1,
+        'num_train_epochs': 4,
+        "train_batch_size": 16,
+        "eval_batch_size": 16,
+        'learning_rate': 2e-5,
+        "max_seq_length": 64,
+        'optimizer': 'AdamW',
+        "evaluate_during_training": True,
+        "evaluate_during_training_steps": 5000,
+        "evaluate_during_training_verbose": True,
+        "use_multiprocessing": False,
+        "fp16": False,
+        "save_steps": -1,
+        "save_eval_checkpoints": False,
+        "save_model_every_epoch": False,
+        "reprocess_input_data": True,
+        "overwrite_output_dir": True,
+        "use_early_stopping": True,
+        "early_stopping_patience": 3,
+        "early_stopping_metric": "eval_loss",
+        "early_stopping_metric_minimize": True}
+    # give the directory for save weights of the model
+
+    newpath = [out_path + 'outputs', out_path + 'cache_dir', out_path + 'outputs/best_model']
+    for path in newpath:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    train_args['output_dir'] = out_path + 'outputs'
+    train_args['cache_dir'] = out_path + 'cache_dir'
+    train_args['best_model_dir'] = out_path + 'outputs/best_model'
+    return train_args
