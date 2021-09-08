@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pickle
+import seaborn as sns
 import itertools
 import re
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -300,7 +301,7 @@ def gen_tsne_values(high_dim_data):
 
 
 class T5Dataset(Dataset):
-    def __init__(self, data, goemo_ratio=1 / 3, type="all", device='cuda'):
+    def __init__(self, data, goemo_ratio=1 / 3, device='cuda'):
         super(T5Dataset, self).__init__()
         self.device = device
         self.texts, self.labels = data['text'], data['labels']
@@ -436,7 +437,8 @@ def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, show_progress=Fal
     # Training
     for epoch in range(epochs):
         # backprop
-        train_loader = DataLoader(T5Dataset(data['train'], goemo_ratio=goemo_ratio), batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(T5Dataset(data['train'], goemo_ratio=goemo_ratio), batch_size=batch_size,
+                                  shuffle=True)
         running_loss = 0.0
         inner_iter = 0
         pbar = tqdm(train_loader, position=0, leave=True)
@@ -504,7 +506,7 @@ def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, show_progress=Fal
         pbar.reset()
     # save best model
     if save_path is not None:
-        save_path_name = save_path + 'ratio_{}_{:.5f}.pt'.format(goemo_ratio,best_val_loss)
+        save_path_name = save_path + 'ratio_{}_{:.5f}.pt'.format(goemo_ratio, best_val_loss)
         torch.save(best_model, save_path_name)
 
     return train_losses, val_losses
@@ -674,3 +676,23 @@ def gen_train_args(bert_type, out_path='/content/drive/MyDrive/DeepZen/model/epo
     train_args['cache_dir'] = out_path + 'cache_dir'
     train_args['best_model_dir'] = out_path + 'outputs/best_model'
     return train_args
+
+
+def create_heatmap(meanTable, stdTable, title, save_path="/"):
+    m = eval(np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
+    s = eval(np.array2string(stdTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
+    output = []
+    for row in range(len(m)):
+        temp = []
+        for col in range(len(m[row])):
+            temp.append(m[row][col] + u"\u00B1" + s[row][col])
+        output.append(temp)
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8), dpi=100)
+    # Rotate y axis label and increase padding
+    ax.set_ylabel(meanTable.index.name, rotation=0, labelpad=20)
+    sns.heatmap(meanTable, annot=output, fmt='', cmap='Blues', ax=ax)
+    # Rotate y axis ticks
+    ax.set_yticklabels(meanTable.index, rotation=0)
+    ax.set_title(title)
+    fig.savefig(save_path + title + '.png', bbox_inches='tight')
+    return ax
