@@ -679,7 +679,7 @@ def gen_train_args(bert_type, out_path='/content/drive/MyDrive/DeepZen/model/epo
 
 
 def create_heatmap(meanTable, stdTable, title, save_path="/"):
-    if stdTable != None:
+    if stdTable is not None:
         m = eval(np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
         s = eval(np.array2string(stdTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
         output = []
