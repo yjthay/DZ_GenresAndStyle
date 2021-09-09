@@ -679,18 +679,23 @@ def gen_train_args(bert_type, out_path='/content/drive/MyDrive/DeepZen/model/epo
 
 
 def create_heatmap(meanTable, stdTable, title, save_path="/"):
-    m = eval(np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
-    s = eval(np.array2string(stdTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
-    output = []
-    for row in range(len(m)):
-        temp = []
-        for col in range(len(m[row])):
-            temp.append(m[row][col] + u"\u00B1" + s[row][col])
-        output.append(temp)
+    if stdTable != None:
+        m = eval(np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
+        s = eval(np.array2string(stdTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
+        output = []
+        for row in range(len(m)):
+            temp = []
+            for col in range(len(m[row])):
+                temp.append(m[row][col] + u"\u00B1" + s[row][col])
+            output.append(temp)
+    else:
+        output = eval(
+            np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.4f'" % x}))
     fig, ax = plt.subplots(1, 1, figsize=(8, 15), dpi=100)
     # Rotate y axis label and increase padding
     ax.set_ylabel(meanTable.index.name, rotation=0, labelpad=20)
     sns.heatmap(meanTable, annot=output, fmt='', cmap='Blues', ax=ax)
+    ax.xaxis.set_ticks_position('top')
     # Rotate y axis ticks
     ax.set_yticklabels(meanTable.index, rotation=0)
     ax.set_title(title)
