@@ -702,3 +702,12 @@ def create_heatmap(meanTable, stdTable, title,fig_size=(8,15),save_path="/"):
     ax.set_title(title)
     fig.savefig(save_path + title + '.png', bbox_inches='tight')
     return ax
+
+def groupby_count(df):
+    output={i:0 for i in model_names}
+    for i in df.idxmax(axis=1):
+        if i not in output.keys():
+            output[i]=1
+        else:
+            output[i]+=1
+    return output
