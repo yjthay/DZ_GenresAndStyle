@@ -678,8 +678,7 @@ def gen_train_args(bert_type, out_path='/content/drive/MyDrive/DeepZen/model/epo
     return train_args
 
 
-
-def create_heatmap(meanTable, stdTable, title,fig_size=(8,15),save_path="/"):
+def create_heatmap(meanTable, stdTable, title, fig_size=(8, 15), save_path="/"):
     if stdTable is not None:
         m = eval(np.array2string(meanTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
         s = eval(np.array2string(stdTable.values, separator=",", formatter={'float_kind': lambda x: "'%.3f'" % x}))
@@ -703,11 +702,12 @@ def create_heatmap(meanTable, stdTable, title,fig_size=(8,15),save_path="/"):
     fig.savefig(save_path + title + '.png', bbox_inches='tight')
     return ax
 
-def groupby_count(df):
-    output={i:0 for i in model_names}
+
+def groupby_count(df, model_names):
+    output = {i: 0 for i in model_names}
     for i in df.idxmax(axis=1):
         if i not in output.keys():
-            output[i]=1
+            output[i] = 1
         else:
-            output[i]+=1
+            output[i] += 1
     return output
