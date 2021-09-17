@@ -121,7 +121,7 @@ def pickle_load(fname):
 
 def label_multi_one_hot(list_of_list):
     mlb = MultiLabelBinarizer()
-    index, columns = len(list_of_list), max(list_of_list)[0] + 1
+    index, columns = len(list_of_list), max(itertools.chain.from_iterable(list_of_list)) + 1
     labels = pd.DataFrame(mlb.fit_transform(list_of_list), columns=range(columns), index=range(index))
     labels = torch.tensor(labels.values, dtype=float)
     return labels
@@ -711,3 +711,11 @@ def groupby_count(df, model_names):
         else:
             output[i] += 1
     return output
+
+def data_reduction(data):
+    data_reduced = {'text':[],'labels':[]}
+    for text, labels in zip(data['text'], data['labels']):
+        if len(labels)>1:
+            data_reduced['text'].append(text)
+            data_reduced['labels'].append(labels)
+    return data_reduced
