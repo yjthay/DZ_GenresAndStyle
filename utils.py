@@ -712,10 +712,18 @@ def groupby_count(df, model_names):
             output[i] += 1
     return output
 
+
 def data_reduction(data):
-    data_reduced = {'text':[],'labels':[]}
+    data_reduced = {'text': [], 'labels': []}
     for text, labels in zip(data['text'], data['labels']):
-        if len(labels)>1:
+        if len(labels) > 1:
             data_reduced['text'].append(text)
             data_reduced['labels'].append(labels)
     return data_reduced
+
+
+def get_vocab_similarity(vocab_keys_1, vocab_keys_2):
+    set_1 = set(vocab_keys_1)
+    set_2 = set(vocab_keys_2)
+    intersection = set_1.intersection(set_2)
+    return intersection, len(intersection) / len(set_1), len(intersection) / len(set_2)
