@@ -423,7 +423,7 @@ class T5Model(torch.nn.Module):
 
 
 # Function for training
-def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, show_progress=False, save_path=None):
+def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, early_stopping=True, show_progress=False, save_path=None):
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
@@ -501,7 +501,8 @@ def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, show_progress=Fal
             best_val_loss = val_loss
             best_model = model
         else:
-            break
+            if early_stopping:
+                break
 
         pbar.reset()
     # save best model
