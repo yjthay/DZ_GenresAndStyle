@@ -120,11 +120,12 @@ def pickle_load(fname):
 
 
 def label_multi_one_hot(list_of_list):
-    mlb = MultiLabelBinarizer()
-    index, columns = len(list_of_list), max(itertools.chain.from_iterable(list_of_list)) + 1
-    labels = pd.DataFrame(mlb.fit_transform(list_of_list), columns=range(columns), index=range(index))
-    labels = torch.tensor(labels.values, dtype=float)
-    return labels
+    for i in range(len(list_of_list)):
+        t=[0]*28
+        for j in list_of_list[i]:
+            t[j]=1
+        list_of_list[i]=t
+    return list_of_list
 
 
 def mapping(data=load_dataset('go_emotions')):
