@@ -49,7 +49,7 @@ class EmotionsDataset(Dataset):
         attention_mask = tokens['attention_mask'].to(device)
 
         # Using sklearn MultiLabelBinarizer to change labels of [[3],[2],[0],[1,3]] to [[0,0,0,1],[0,0,1,0],[1,0,0,0],[0,1,0,1]]
-        labels = label_multi_one_hot(labels).to(device)
+        labels = torch.tensor(label_multi_one_hot(labels)).to(device)
 
         self.input_ids = input_ids
         self.attention_mask = attention_mask
@@ -121,10 +121,10 @@ def pickle_load(fname):
 
 def label_multi_one_hot(list_of_list):
     for i in range(len(list_of_list)):
-        t=[0]*28
+        t = [0] * 28
         for j in list_of_list[i]:
-            t[j]=1
-        list_of_list[i]=t
+            t[j] = 1
+        list_of_list[i] = t
     return list_of_list
 
 
@@ -424,7 +424,8 @@ class T5Model(torch.nn.Module):
 
 
 # Function for training
-def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, early_stopping=True, show_progress=False, save_path=None):
+def train_T5(model, data, goemo_ratio, epochs, lr, batch_size, early_stopping=True, show_progress=False,
+             save_path=None):
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
